@@ -22,6 +22,14 @@ def direction(xf, yf, xt, yt):
         return Direction.Left if xt < xf else Direction.Right
 
 
+g_anticlockwise = {
+    Direction.Up: Direction.Left,
+    Direction.Left: Direction.Down,
+    Direction.Down: Direction.Right,
+    Direction.Right: Direction.Up,
+}
+
+
 def winding_number(grid, loop, x, y):
     right_intersect = None
     loop_idx_map = {(x, y): idx for idx, (x, y) in enumerate(loop)}
@@ -36,6 +44,7 @@ def winding_number(grid, loop, x, y):
     wind_angle = 0
     start_idx = right_intersect
     loop_idx = start_idx
+    last_dir = None
     for i in range(1, len(loop) + 1):
         last_idx = loop_idx
         loop_idx = (start_idx + i) % len(loop)
@@ -43,31 +52,12 @@ def winding_number(grid, loop, x, y):
         xf, yf = loop[last_idx]
         dir = direction(xf, yf, xt, yt)
 
-        token = grid[yt][xt]
-        if token == 'L':
-            assert (dir == Direction.Left or dir == Direction.Down)
-            if dir == Direction.Left:
-                wind_angle -= 90
-            elif dir == Direction.Down:
+        if last_dir and last_dir != dir:
+            anticlockwise = g_anticlockwise[last_dir] == dir
+            if anticlockwise:
                 wind_angle += 90
-        if token == 'J':
-            assert (dir == Direction.Down or dir == Direction.Right)
-            if dir == Direction.Down:
+            else:
                 wind_angle -= 90
-            elif dir == Direction.Right:
-                wind_angle += 90
-        if token == '7':
-            assert (dir == Direction.Right or dir == Direction.Up)
-            if dir == Direction.Right:
-                wind_angle -= 90
-            elif dir == Direction.Up:
-                wind_angle += 90
-        if token == 'F':
-            assert (dir == Direction.Left or dir == Direction.Up)
-            if dir == Direction.Up:
-                wind_angle -= 90
-            elif dir == Direction.Left:
-                wind_angle += 90
 
     return wind_angle != 0
 
