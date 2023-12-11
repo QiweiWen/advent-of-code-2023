@@ -44,9 +44,35 @@ def winding_number(grid, loop, x, y):
         xt, yt = loop[loop_idx]
         xf, yf = loop[last_idx]
 
+        counter_clockwise = False
         dir = direction(xf, yf, xt, yt)
         if last_dir and last_dir != dir:
-            pass
+            first_quadrant = x <= xf and y <= yf
+            second_quadrant = x >= xf and y <= yf
+            third_quadrant = x <= xf and y >= yf
+            fourth_quadrant = x >= xf and y >= yf
+            if last_dir == Direction.Right and dir == Direction.Up:
+                counter_clockwise = first_quadrant
+            if last_dir == Direction.Right and dir == Direction.Down:
+                counter_clockwise = not third_quadrant
+            if last_dir == Direction.Left and dir == Direction.Up:
+                counter_clockwise = not second_quadrant
+            if last_dir == Direction.Left and dir == Direction.Down:
+                counter_clockwise = fourth_quadrant
+
+            if last_dir == Direction.Down and dir == Direction.Left:
+                counter_clockwise = not first_quadrant
+            if last_dir == Direction.Down and dir == Direction.Right:
+                counter_clockwise = second_quadrant
+            if last_dir == Direction.Up and dir == Direction.Left:
+                counter_clockwise = third_quadrant
+            if last_dir == Direction.Up and dir == Direction.Right:
+                counter_clockwise = not fourth_quadrant
+
+            if counter_clockwise:
+                wind_angle += 1
+            else:
+                wind_angle -= 1
 
         last_dir = dir
 
