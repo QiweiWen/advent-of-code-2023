@@ -1,4 +1,5 @@
 import sys
+from enum import Enum
 from part1 import *
 
 
@@ -22,14 +23,6 @@ def direction(xf, yf, xt, yt):
         return Direction.Left if xt < xf else Direction.Right
 
 
-g_anticlockwise = {
-    Direction.Up: Direction.Left,
-    Direction.Left: Direction.Down,
-    Direction.Down: Direction.Right,
-    Direction.Right: Direction.Up,
-}
-
-
 def winding_number(grid, loop, x, y):
     right_intersect = None
     loop_idx_map = {(x, y): idx for idx, (x, y) in enumerate(loop)}
@@ -50,16 +43,14 @@ def winding_number(grid, loop, x, y):
         loop_idx = (start_idx + i) % len(loop)
         xt, yt = loop[loop_idx]
         xf, yf = loop[last_idx]
+
         dir = direction(xf, yf, xt, yt)
-
         if last_dir and last_dir != dir:
-            anticlockwise = g_anticlockwise[last_dir] == dir
-            if anticlockwise:
-                wind_angle += 90
-            else:
-                wind_angle -= 90
+            pass
 
-    return wind_angle != 0
+        last_dir = dir
+
+    return wind_angle
 
 
 def count_enclosed(grid):
