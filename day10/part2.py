@@ -23,67 +23,42 @@ def direction(xf, yf, xt, yt):
         return Direction.Left if xt < xf else Direction.Right
 
 
-def winding_number(grid, loop, x, y):
-    right_intersect = None
-    loop_idx_map = {(x, y): idx for idx, (x, y) in enumerate(loop)}
-    for xr in range(x + 1, len(grid[0])):
-        right_intersect = loop_idx_map.get((xr, y))
-        if right_intersect:
-            break
+def replace_S(grid, loop):
+    sidx = next(s for s, (x, y) in enumerate(loop) if grid[y][x] == 'S')
 
-    if not right_intersect:
-        return 0
+    predecessor = len(loop) - 1 if sidx == 0 else sidx - 1
+    successor = 0 if sidx == len(loop) - 1 else sidx + 1
 
-    wind_angle = 0
-    start_idx = right_intersect
-    loop_idx = start_idx
-    last_dir = None
-    for i in range(1, len(loop) + 1):
-        last_idx = loop_idx
-        loop_idx = (start_idx + i) % len(loop)
-        xt, yt = loop[loop_idx]
-        xf, yf = loop[last_idx]
+    xa, ya = loop[sidx]
+    xp, yp = loop[predecessor]
+    xs, ys = loop[successor]
 
-        counter_clockwise = False
-        dir = direction(xf, yf, xt, yt)
-        if last_dir and last_dir != dir:
-            first_quadrant = x <= xf and y <= yf
-            second_quadrant = x >= xf and y <= yf
-            third_quadrant = x <= xf and y >= yf
-            fourth_quadrant = x >= xf and y >= yf
-            if last_dir == Direction.Right and dir == Direction.Up:
-                counter_clockwise = first_quadrant
-            if last_dir == Direction.Right and dir == Direction.Down:
-                counter_clockwise = not third_quadrant
-            if last_dir == Direction.Left and dir == Direction.Up:
-                counter_clockwise = not second_quadrant
-            if last_dir == Direction.Left and dir == Direction.Down:
-                counter_clockwise = fourth_quadrant
+    dirs = set([direction(xp, yp, xa, ya), direction(xs, ys, xa, ya)])
+    token = next(t for (t, v) in g_token_direction_map.items()
+                 if set(v) == dirs)
+    grid[ya][xa] = token
 
-            if last_dir == Direction.Down and dir == Direction.Left:
-                counter_clockwise = not first_quadrant
-            if last_dir == Direction.Down and dir == Direction.Right:
-                counter_clockwise = second_quadrant
-            if last_dir == Direction.Up and dir == Direction.Left:
-                counter_clockwise = third_quadrant
-            if last_dir == Direction.Up and dir == Direction.Right:
-                counter_clockwise = not fourth_quadrant
 
-            if counter_clockwise:
-                wind_angle += 1
-            else:
-                wind_angle -= 1
-
-        last_dir = dir
-
-    return wind_angle
+def is_inside(grid, loop, x, y):
+    if (x, y) in loop:
+        return False
+    ray_cast = ((xr, y) for xr in range(x + 1, len(grid[0])))
+    intersects = [(x, y) for (x, y) in ray_cast
+                  if (x, y) in loop and grid[y][x] in "|LJ7F"]
+    intersects = "".join(grid[y][x] for (x, y) in intersects)
+    intersects = intersects.replace("LJ", "")
+    intersects = intersects.replace("L7", "-")
+    intersects = intersects.replace("FJ", "-")
+    intersects = intersects.replace("F7", "")
+    return len(intersects) % 2 != 0
 
 
 def count_enclosed(grid):
     loop = find_main_loop(grid)
-    draw_loop(grid, loop, [])
-    print(winding_number(grid, loop, 0, 1))
-    return 0
+    replace_S(grid, loop)
+
+    #is_inside(grid, loop, 4, 4)
+    #return 0
     inside = []
     for y in range(len(grid)):
         row = grid[y]
@@ -91,7 +66,7 @@ def count_enclosed(grid):
             if (x, y) in loop:
                 continue
 
-            if winding_number(grid, loop, x, y) != 0:
+            if is_inside(grid, loop, x, y):
                 inside.append((x, y))
 
     draw_loop(grid, loop, inside)
