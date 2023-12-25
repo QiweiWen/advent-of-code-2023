@@ -61,7 +61,7 @@ def simulate(grid, cycles):
     offset = 0
     rocks = set([(i, j) for i in range(len(grid))
                  for j in range(len(grid[0])) if grid[i][j] == 'O'])
-    seen = {key(rocks) : 0}
+    seen = {key(rocks): 0}
     loads = [load(rocks, grid)]
 
     for i in range(cycles):
@@ -76,7 +76,7 @@ def simulate(grid, cycles):
 
         loads.append(load(rocks, grid))
         seen[repr] = i + 1
-    
+
     return loads[offset + (cycles - offset) % period]
 
 
@@ -90,6 +90,7 @@ def draw_grid(grid, rocks):
             else:
                 print('.', end="")
         print()
+
 
 if __name__ == "__main__":
     grid = parse_input(sys.stdin)
