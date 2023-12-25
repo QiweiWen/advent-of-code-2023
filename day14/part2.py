@@ -29,7 +29,6 @@ SOUTH = 2
 EAST = 3
 
 MOVE_ALONG = [up, left, down, right]
-MOVE_OPPOSITE = [down, right, up, left]
 
 
 def next_positions(rocks, dir, grid):
@@ -49,18 +48,36 @@ def next_positions(rocks, dir, grid):
     return next_rocks
 
 
+def key(rocks):
+    return "".join([(str(i) + str(j)) for (i, j) in sorted(rocks)])
+
+
+def load(rocks, grid):
+    return sum(len(grid) - i for (i, j) in rocks)
+
+
 def simulate(grid, cycles):
+    period = 0
+    offset = 0
     rocks = set([(i, j) for i in range(len(grid))
                  for j in range(len(grid[0])) if grid[i][j] == 'O'])
+    seen = {key(rocks) : 0}
+    loads = [load(rocks, grid)]
 
     for i in range(cycles):
         for dir in [NORTH, WEST, SOUTH, EAST]:
             rocks = next_positions(rocks, dir, grid)
 
-        if (i + 1) % 10000 == 0:
-            print(f"Simulated {i + 1} iterations")
+        repr = key(rocks)
+        if (last := seen.get(repr, None)) is not None:
+            period = i + 1 - last
+            offset = last
+            break
 
-    return rocks
+        loads.append(load(rocks, grid))
+        seen[repr] = i + 1
+    
+    return loads[offset + (cycles - offset) % period]
 
 
 def draw_grid(grid, rocks):
@@ -74,22 +91,7 @@ def draw_grid(grid, rocks):
                 print('.', end="")
         print()
 
-
-TEST_GRID = \
-    ["O....#....",
-     "O.OO#....#",
-     ".....##...",
-     "OO.#O....O",
-     ".O.....O#.",
-     "O.#..O.#.#",
-     "..O..#O..O",
-     ".......O..",
-     "#....###..",
-     "#OO..#...."]
-
-
 if __name__ == "__main__":
     grid = parse_input(sys.stdin)
-    grid = TEST_GRID
-    rocks = simulate(grid, 1000000)
-    draw_grid(grid, rocks)
+    ld = simulate(grid, 1000000000)
+    print(ld)
