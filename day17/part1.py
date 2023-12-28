@@ -20,20 +20,21 @@ def opposite(dir1, dir2):
 
 def search(grid):
     # loss, straight distance covered, curr direction, coordinates
-    heap = [(0, 0, None, (0, 0))]
+    heap = [((0, 0), (None, 0, 0))]
     seen = set()
     cost = dict()
     # heap_index = {(0, 0): 0}
     prev = dict()
+    to_see = set((LEFT, len(grid) - 1, len(grid[0]) - 1),
+                 (DOWN, len(grid) - 1, len(grid[0]) - 1))
+
     while heap:
-        uloss, ustraight, udir, (ui, uj) = heapq.heappop(heap)
+        (uloss, ustraight), (udir, ui, uj) = heapq.heappop(heap)
         # heap_index.pop((ui, uj))
-        seen.add((ui, uj))
+        seen.add((udir, ui, uj))
 
-        if (ui < 5 and uj < 5):
-            print(f"POP {(uloss, ustraight, udir, (ui, uj))}", file=sys.stderr)
-
-        if ui == len(grid) - 1 and uj == len(grid[ui]) - 1:
+        to_see.pop((udir, ui, uj))
+        if not to_see:
             break
 
         vdirs = [LEFT, RIGHT, UP, DOWN]
@@ -48,36 +49,38 @@ def search(grid):
             vstraight = 1 if vdir != udir else ustraight + 1
             vi, vj = day16p1.move(ui, uj, vdir)
             if day16p1.inside(grid, vi, vj):
-                neigh = (uloss + int(grid[vi][vj]), vstraight, vdir, (vi, vj))
+                neigh = ((uloss + int(grid[vi][vj]), vstraight), (vdir, vi, vj))
                 neighs.append(neigh)
 
-        for vcost, vstraight, vdir, (vi, vj) in neighs:
-            if (vi, vj) not in seen:
-                old_vcost = cost.get((vi, vj))
+        for neigh in neighs:
+            (vloss, vstraight), (vdir, vi, vj) = neigh
+            vcost = vloss << 16 + vstraight
+            if (vdir, vi, vj) not in seen:
+                old_vcost = cost.get((vdir, vi, vj))
                 if old_vcost is not None and vcost >= old_vcost:
                     continue
 
                 if old_vcost is not None:
                     for i_heap in enumerate(heap):
-                        _, _, (curr_i, curr_j) = heap[i_heap]
-                        if curr_i == vi and curr_j == vj:
+                        _, (curr_dir, curr_i, curr_j) = heap[i_heap]
+                        if curr_dir == vdir and curr_i == vi and curr_j == vj:
                             heap.pop(i_heap)
                             heapq.heapify(i_heap)
                             break
 
-                cost[(vi, vj)] = vcost
-                prev[(vi, vj)] = (ui, uj)
-                heapq.heappush(heap, (vcost, vstraight, vdir, (vi, vj)))
+                cost[(vdir, vi, vj)] = vcost
+                prev[(vdir, vi, vj)] = (udir, ui, uj)
+                heapq.heappush(heap, neigh) 
 
-                if (vi < 5 and vj < 5):
-                    print(
-                        f"PUSH {(vcost, vstraight, vdir, (vi, vj))}", file=sys.stderr)
+    rpath = [(RIGHT, ui, uj)]
+    while rpath[0] != (None, 0, 0):
+        rpath.insert(0, prev[path[0]])
 
-    path = [(ui, uj)]
-    while path[0] != (0, 0):
-        path.insert(0, prev[path[0]])
+    dpath = [(DOWN, ui, uj)]
+    while dpath[0] != (None, 0, 0):
+        dpath.insert(0, prev[path[0]])
 
-    return path
+    return dpath
 
 
 def temp_loss(grid, path):
@@ -86,6 +89,8 @@ def temp_loss(grid, path):
 
 if __name__ == "__main__":
     grid = day16p1.parse_input(sys.stdin)
-    path = search(grid)
-    day16p1.draw_grid(grid, path)
-    print(temp_loss(grid, path))
+    rpath, dpath = search(grid)
+    print("rpath:")
+    day16p1.draw_grid(grid, rpath)
+    print("dpath:")
+    day16p1.draw_grid(grid, dpath)
