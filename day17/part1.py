@@ -25,17 +25,21 @@ def search(grid):
     cost = dict()
     # heap_index = {(0, 0): 0}
     prev = dict()
-    to_see = set((LEFT, len(grid) - 1, len(grid[0]) - 1),
-                 (DOWN, len(grid) - 1, len(grid[0]) - 1))
+    to_see = set([(RIGHT, len(grid) - 1, len(grid[0]) - 1),
+                  (DOWN, len(grid) - 1, len(grid[0]) - 1)])
 
     while heap:
         (uloss, ustraight), (udir, ui, uj) = heapq.heappop(heap)
         # heap_index.pop((ui, uj))
-        seen.add((udir, ui, uj))
+        unode = (udir, ui, uj)
+        seen.add(unode)
 
-        to_see.pop((udir, ui, uj))
-        if not to_see:
-            break
+        print(f"POP {unode} == ({uloss}, {ustraight})", file=sys.stderr)
+
+        if unode in to_see:
+            to_see.remove(unode)
+            if not to_see:
+                break
 
         vdirs = [LEFT, RIGHT, UP, DOWN]
         neighs = []
@@ -49,38 +53,46 @@ def search(grid):
             vstraight = 1 if vdir != udir else ustraight + 1
             vi, vj = day16p1.move(ui, uj, vdir)
             if day16p1.inside(grid, vi, vj):
-                neigh = ((uloss + int(grid[vi][vj]), vstraight), (vdir, vi, vj))
+                neigh = ((uloss + int(grid[vi][vj]),
+                         vstraight), (vdir, vi, vj))
                 neighs.append(neigh)
 
         for neigh in neighs:
-            (vloss, vstraight), (vdir, vi, vj) = neigh
-            vcost = vloss << 16 + vstraight
-            if (vdir, vi, vj) not in seen:
-                old_vcost = cost.get((vdir, vi, vj))
+            (vloss, vstraight), vnode = neigh
+            DEBUG = vnode == (1, 6, 11)
+            vcost = (vloss << 16) + vstraight
+            if vnode not in seen:
+                old_vcost = cost.get(vnode)
                 if old_vcost is not None and vcost >= old_vcost:
                     continue
 
                 if old_vcost is not None:
-                    for i_heap in enumerate(heap):
-                        _, (curr_dir, curr_i, curr_j) = heap[i_heap]
-                        if curr_dir == vdir and curr_i == vi and curr_j == vj:
+                    for i_heap, ((curr_loss, curr_straight), curr_node) in enumerate(heap):
+                        if curr_node == vnode:
                             heap.pop(i_heap)
-                            heapq.heapify(i_heap)
+                            heapq.heapify(heap)
                             break
 
-                cost[(vdir, vi, vj)] = vcost
-                prev[(vdir, vi, vj)] = (udir, ui, uj)
-                heapq.heappush(heap, neigh) 
+                cost[vnode] = vcost
+                prev[vnode] = (udir, ui, uj)
+                heapq.heappush(heap, neigh)
+                print(f"PUSH {neigh}", file=sys.stderr)
 
-    rpath = [(RIGHT, ui, uj)]
-    while rpath[0] != (None, 0, 0):
-        rpath.insert(0, prev[path[0]])
+    curr_dir = RIGHT
+    rpath = [(ui, uj)]
+    while rpath[0] != (0, 0):
+        curr_i, curr_j = rpath[0]
+        curr_dir, next_i, next_j = prev[(curr_dir, curr_i, curr_j)]
+        rpath.insert(0, (next_i, next_j))
 
-    dpath = [(DOWN, ui, uj)]
-    while dpath[0] != (None, 0, 0):
-        dpath.insert(0, prev[path[0]])
+    curr_dir = DOWN
+    dpath = [(ui, uj)]
+    while dpath[0] != (0, 0):
+        curr_i, curr_j = dpath[0]
+        curr_dir, next_i, next_j = prev[(curr_dir, curr_i, curr_j)]
+        dpath.insert(0, (next_i, next_j))
 
-    return dpath
+    return rpath, dpath
 
 
 def temp_loss(grid, path):
@@ -94,3 +106,5 @@ if __name__ == "__main__":
     day16p1.draw_grid(grid, rpath)
     print("dpath:")
     day16p1.draw_grid(grid, dpath)
+
+    print(min(temp_loss(grid, rpath), temp_loss(grid, dpath)))
