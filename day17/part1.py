@@ -46,15 +46,8 @@ def search(grid):
 
     while heap:
         uloss, (ustraight, udir, ui, uj) = heapq.heappop(heap)
-        # heap_index.pop((ui, uj))
         unode = (ustraight, udir, ui, uj)
         seen.add(unode)
-
-        # print(f"POP {unode} == ({uloss}, {ustraight})", file=sys.stderr)
-        # if (unode == (UP, 0, 5)):
-        # path = reconstruct_path(prev, unode)
-        # print("UP, 0, 5 path:")
-        # day16p1.draw_grid(grid, path)
 
         if unode in to_see:
             to_see.remove(unode)
@@ -97,7 +90,6 @@ def search(grid):
                 cost[vnode] = vcost
                 prev[vnode] = (ustraight, udir, ui, uj)
                 heapq.heappush(heap, neigh)
-                # print(f"PUSH {neigh}", file=sys.stderr)
 
     paths = [reconstruct_path(prev, x) for x in dests]
     return paths
