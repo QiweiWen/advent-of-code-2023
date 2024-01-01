@@ -1,7 +1,5 @@
 import sys
-import os
 import re
-import importlib
 
 
 def parse_input(inf):
@@ -17,25 +15,28 @@ def parse_input(inf):
     return result
 
 
+R = 0
+D = 1
+L = 2
+U = 3
+
+
 def make_loop(digs):
     loop = [(0, 0)]
-    colours = dict()
     end = (0, 0)
     for d, l, rgb in digs:
-        if d == 'R':
+        if d in ['R', R]:
             def move(x, n): return (x[0], x[1] + n)
-        elif d == 'L':
+        elif d in ['L', L]:
             def move(x, n): return (x[0], x[1] - n)
-        elif d == 'U':
+        elif d in ['U', U]:
             def move(x, n): return (x[0] - n, x[1])
-        elif d == 'D':
+        elif d in ['D', D]:
             def move(x, n): return (x[0] + n, x[1])
 
-        stroke = [move(end, i + 1) for i in range(l)]
-        loop += stroke
-        end = stroke[-1]
-        for s in stroke:
-            colours[s] = rgb
+        vertex = move(end, l)
+        loop.append(vertex)
+        end = vertex
 
     l_border = min(j for (i, j) in loop)
     u_border = min(i for (i, j) in loop)
@@ -49,117 +50,49 @@ def make_loop(digs):
     return loop
 
 
-CROSS_ABOVE = 1
-CROSS_BELOW = 2
-CROSS_MIDDLE = 3
+def loop_area(loop):
+    total_area = 0
+    for i in range(len(loop) - 1):
+        x1, y1 = loop[i]
+        x2, y2 = loop[i + 1]
+        subarea = (y2 + y1) * (x2 - x1)
+        
+        print(f"{loop[i]}, {loop[i + 1]}, subarea {subarea}")
+        
+        total_area += subarea
+
+    return abs(total_area // 2)
 
 
-def cross_type(i, j, loop, prev, next):
-    prev = loop[prev]
-    next = loop[next]
+def in_loop(loop, row, col):
+    for i in range(len(loop) - 1):
+        v1 = loop[i]
+        v2 = loop[i + 1]
+        r1, c1 = min(v1, v2)
+        r2, c2 = max(v1, v2)
 
-    i_min, j_min = min((prev, next))
-    i_max, j_max = max((prev, next))
-
-    above = j_min == j and i_min < i
-    below = j_max == j and i_max > i
-
-    if above and below:
-        return CROSS_MIDDLE
-
-    if above:
-        return CROSS_BELOW
-
-    if below:
-        return CROSS_ABOVE
-
-    return None
+        if r1 == row and r2 == row and c1 <= col and col <= c2:
+            return True
+        if c1 == col and c2 == col and r1 <= row and row <= r2:
+            return True
+    return False
 
 
-def plot_path(loop, inside):
+def plot_path(loop):
     r_border = max(j for (i, j) in loop)
     d_border = max(i for (i, j) in loop)
 
     for i in range(d_border + 2):
         for j in range(r_border + 2):
-            if (i, j) in loop:
+            if in_loop(loop, i, j):
                 print("#", end="")
-            elif (i, j) in inside:
-                print('@', end="")
             else:
                 print(".", end="")
         print("")
 
 
-def ray_cast(loop, r_border, prev_map, next_map, row):
-    intersections = []
-    for col in range(r_border + 2):
-        iprev = prev_map.get((row, col))
-        inext = next_map.get((row, col))
-
-        in_loop = (row, col) in loop
-        curr_cross_type = None if not in_loop else\
-            cross_type(row, col, loop, iprev, inext)
-        intersections.append((col, curr_cross_type))
-    intersections = [x for x in intersections if x[1]]
-    return intersections
-
-
-DEBUG = False
-
-
-def num_intersections(col, cast):
-    global DEBUG
-    try:
-        ind = next(i for i, c in enumerate(cast) if cast[i][0] > col)
-        last_cross = None
-        ncrosses = 0
-        for i in range(ind, len(cast)):
-            if cast[i][1] == CROSS_MIDDLE:
-                ncrosses += 1
-                last_cross = None
-            elif last_cross is not None:
-                if last_cross != cast[i][1]:
-                    ncrosses += 1
-                last_cross = None
-            else:
-                last_cross = cast[i][1]
-
-        return ncrosses
-    except StopIteration:
-        return 0
-
-
-def count_inside(loop):
-    prev_map = dict()
-    next_map = dict()
-    for ind in range(len(loop)):
-        iprev = len(loop) - 1 if ind == 0 else ind - 1
-        inext = 0 if ind == len(loop) - 1 else ind + 1
-        prev_map[loop[ind]] = iprev
-        next_map[loop[ind]] = inext
-
-    r_border = max(j for (i, j) in loop)
-    d_border = max(i for (i, j) in loop)
-
-    inside = set()
-
-    global DEBUG
-    for row in range(d_border + 1):
-        cast = ray_cast(loop, r_border, prev_map, next_map, row)
-        for col in range(r_border):
-            DEBUG = (row, col) == (5, 1) 
-            if (row, col) not in loop:
-                crosses = num_intersections(col, cast)
-                if crosses % 2 == 1:
-                    inside.add((row, col))
-
-    return inside
-
-
 if __name__ == "__main__":
     input = parse_input(sys.stdin)
     loop = make_loop(input)
-    inside = count_inside(loop)
-    plot_path(loop, inside)
-    print(len(inside) + len(loop) - 1)
+    #plot_path(loop)
+    print(loop_area(loop))
