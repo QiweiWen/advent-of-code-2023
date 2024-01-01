@@ -22,6 +22,7 @@ U = 3
 
 
 def make_loop(digs):
+    perimeter = 0
     loop = [(0, 0)]
     end = (0, 0)
     for d, l, rgb in digs:
@@ -34,6 +35,7 @@ def make_loop(digs):
         elif d in ['D', D]:
             def move(x, n): return (x[0] + n, x[1])
 
+        perimeter += l
         vertex = move(end, l)
         loop.append(vertex)
         end = vertex
@@ -47,21 +49,19 @@ def make_loop(digs):
     if u_border < 0:
         loop = [(i - u_border, j) for (i, j) in loop]
 
-    return loop
+    return loop, perimeter
 
 
-def loop_area(loop):
+def loop_area(loop, perimeter):
     total_area = 0
     for i in range(len(loop) - 1):
         x1, y1 = loop[i]
         x2, y2 = loop[i + 1]
         subarea = (y2 + y1) * (x2 - x1)
-        
-        print(f"{loop[i]}, {loop[i + 1]}, subarea {subarea}")
-        
         total_area += subarea
-
-    return abs(total_area // 2)
+    
+    # https://www.reddit.com/r/adventofcode/comments/18l8mao/2023_day_18_intuition_for_why_spoiler_alone/
+    return abs(total_area // 2) + perimeter // 2 + 1
 
 
 def in_loop(loop, row, col):
@@ -93,6 +93,6 @@ def plot_path(loop):
 
 if __name__ == "__main__":
     input = parse_input(sys.stdin)
-    loop = make_loop(input)
+    loop, perim = make_loop(input)
     #plot_path(loop)
-    print(loop_area(loop))
+    print(loop_area(loop, perim))
