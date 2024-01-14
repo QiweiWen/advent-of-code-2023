@@ -59,7 +59,7 @@ def loop_area(loop, perimeter):
         x2, y2 = loop[i + 1]
         subarea = (y2 + y1) * (x2 - x1)
         total_area += subarea
-    
+
     # https://www.reddit.com/r/adventofcode/comments/18l8mao/2023_day_18_intuition_for_why_spoiler_alone/
     return abs(total_area // 2) + perimeter // 2 + 1
 
@@ -94,5 +94,5 @@ def plot_path(loop):
 if __name__ == "__main__":
     input = parse_input(sys.stdin)
     loop, perim = make_loop(input)
-    #plot_path(loop)
+    # plot_path(loop)
     print(loop_area(loop, perim))
