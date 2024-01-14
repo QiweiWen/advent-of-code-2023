@@ -37,7 +37,7 @@ def parse_input(inf):
 
 def reconstruct_path(parent_dict, node):
     path = [node]
-    while node[1] != 'in':
+    while node[2] != 'in':
         parent_node = parent_dict[node]
         path.insert(0, parent_node)
         node = parent_node
@@ -45,12 +45,12 @@ def reconstruct_path(parent_dict, node):
 
 
 def gen_accepted_paths(rules):
-    stack = [(None, "in")]
+    stack = [(None, None, "in")]
     parent = {}
 
     while stack:
         curr_node = stack[-1]
-        parent_idx, ruleset_name = curr_node
+        parent_name, parent_idx, ruleset_name = curr_node
         stack.pop()
 
         if ruleset_name == 'A':
@@ -60,18 +60,18 @@ def gen_accepted_paths(rules):
         if ruleset_name == 'R':
             continue
 
-        def push_neighbour(idx, name):
-            neigh_node = (idx, name)
+        def push_neighbour(parent_name, idx, name):
+            neigh_node = (parent_name, idx, name)
             parent[neigh_node] = curr_node
             stack.append(neigh_node)
 
         ruleset = rules[ruleset_name]
         predicates, fallthrough = ruleset
 
-        push_neighbour(None, fallthrough)
+        push_neighbour(ruleset_name, None, fallthrough)
         for i in range(len(predicates)):
             predicate, jump = predicates[i]
-            push_neighbour(i, jump)
+            push_neighbour(ruleset_name, i, jump)
 
 
 # "a<2006"
@@ -117,8 +117,8 @@ def invalid(x, m, a, s):
 
 def constrain(rules, path, x, m, a, s):
     for i in range(len(path) - 1):
-        _, rule_name = path[i]
-        rule_idx, _ = path[i + 1]
+        _, _, rule_name = path[i]
+        _, rule_idx, _ = path[i + 1]
 
         predicates, fallthrough = rules[rule_name]
         for idx, (predicate, jump) in enumerate(predicates):
