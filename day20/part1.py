@@ -20,7 +20,8 @@ class Node(object):
 
     def receive_signal(self, node_from, high):
         self.inputs[node_from] = high
-        print(f"{node_from.name} -{'high' if high else 'low'}-> {self.name}")
+        if True:
+            print(f"{node_from.name} -{'high' if high else 'low'}-> {self.name}")
         if high:
             Node.s_high_count += 1
         else:
@@ -120,8 +121,7 @@ if __name__ == "__main__":
     with open(inf, "r") as inf:
         button = parse_input(inf)
 
-    for i in range(1):
+    for i in range(1000):
         simulate_once(button)
 
-    print(Node.s_high_count)
-    print(Node.s_low_count)
+    print(Node.s_high_count * Node.s_low_count)
